@@ -1,0 +1,3 @@
+# Put files that should not be ignored by git in this file
+.htaccess
+index.php

@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+"""magdev: Managing magento development
+
+Usage:
+    magdev (-h | --help)
+    magdev init <path> [--config=FILES]
+    magdev clone <uri> <path>
+    magdev update (extensions|magento)
+
+Options:
+    -h --help          Show help
+    --config=FILES     Comma-separated list of config-files[default: ]
+
+"""
+
+from docopt import docopt
+
+import os
+import sys
+from docopt import docopt
+
+from ConfigParser import (
+    SafeConfigParser,
+    NoSectionError,
+    NoOptionError,
+)
+
+from magdev import (
+    __version__,
+    init,
+    DEFAULT_CONFIG,
+    resource_filename,
+    Magdev,
+)
+
+
+def get_base():
+    if os.path.exists('.magdev'):
+        return '../'
+    else:
+        return '.'
+
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__,
+                       version='{0}s {1}s'.format(__name__,
+                                                  '.'.join(str(i) for i
+                                                           in __version__)))
+
+    default_config = DEFAULT_CONFIG.copy()
+    config = SafeConfigParser(default_config)
+
+    for p in os.path.expanduser(arguments['--config']).split(','):
+        if p and not os.path.isfile(p):
+            exit('Error: File missing - \'{0}\''.format(p))
+
+    config.read(p for p in
+                os.path.expanduser(arguments['--config']).split(','))
+
+    if arguments['init']:
+        # Read required values
+        if os.path.exists(arguments['<path>']):
+            exit("Path '{0}' already exists".format(arguments['<path>']))
+        template_vars = {'magento':{}}
+        # template_vars['magento']['git'] = raw_input('Magento git ' 'clone string: ')
+        # XXX: During development
+        template_vars['magento']['git'] = "/Users/daniel/github/magento-svn-clone/"
+        magdev = Magdev(arguments['<path>'])
+        magdev.init(template_vars)
+    elif arguments['clone']:
+        magdev = Magdev(arguments['<path>']).clone(arguments['<uri>'])
+
+    elif arguments['update']:
+        if arguments['magento']:
+            Magdev(get_base()).update_magento()
+        if arguments['extensions']:
+            Magdev(get_base()).update_extensions()
+
